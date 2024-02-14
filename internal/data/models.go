@@ -171,6 +171,7 @@ func (u *User) Delete() error {
 	return nil
 }
 
+// Insert function used to insert into databse table
 func (u *User) Insert(user User) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
@@ -199,6 +200,25 @@ func (u *User) Insert(user User) (int, error) {
 	}
 
 	return newID, nil
+}
+
+// ResetPassword function used to reset password
+func (u *User) ResetPassword(password string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return err
+	}
+
+	stmt := `update users set password = $1 where id = $2`
+	_, err = db.ExecContext(ctx, stmt, hashedPassword, u.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type Token struct {
