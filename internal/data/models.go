@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -219,6 +220,22 @@ func (u *User) ResetPassword(password string) error {
 	}
 
 	return nil
+}
+
+// PasswordMatches function used to match password
+func (u *User) PasswordMatches(plainTextPassword string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(plainTextPassword))
+
+	if err != nil {
+		switch {
+		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
+			return false, nil
+		default:
+			return false, err
+		}
+	}
+
+	return true, nil
 }
 
 type Token struct {
