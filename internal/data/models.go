@@ -248,3 +248,30 @@ type Token struct {
 	UpdateAt  time.Time `json:"updated_at"`
 	Expiry    time.Time `json:"expiry"`
 }
+
+// GetByToken function used to get token from database by plain token
+func (t *Token) GetByToken(plainText string) (*Token, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `select id, user_id, email, token, token_hash, created_at, updated_at, expiry from tokens where token = $1`
+
+	var token Token
+	row := db.QueryRowContext(ctx, query, plainText)
+	err := row.Scan(
+		&token.ID,
+		&token.UserId,
+		&token.Email,
+		&token.Token,
+		&token.TokenHash,
+		&token.CreatedAt,
+		&token.UpdateAt,
+		&token.Expiry,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &token, nil
+}
