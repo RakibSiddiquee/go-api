@@ -7,6 +7,8 @@ import (
 	"database/sql"
 	"encoding/base32"
 	"errors"
+	"net/http"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -324,4 +326,39 @@ func (t *Token) GenerateToken(userId int, ttl time.Duration) (*Token, error) {
 	token.TokenHash = hash[:]
 
 	return token, nil
+}
+
+// AuthenticateToken function used to authenticate token
+func (t *Token) AuthenticateToken(r *http.Request) (*User, error) {
+	authorizationHeader := r.Header.Get("Authorization")
+	if authorizationHeader == "" {
+		return nil, errors.New("no authorization header received")
+	}
+
+	headerParts := strings.Split(authorizationHeader, " ")
+	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+		return nil, errors.New("no valid authorization header received")
+	}
+
+	token := headerParts[1]
+
+	if len(token) != 26 {
+		return nil, errors.New("wrong token size")
+	}
+
+	tkn, err := t.GetByToken(token)
+	if err != nil {
+		return nil, errors.New("no matching token found")
+	}
+
+	if tkn.Expiry.Before(time.Now()) {
+		return nil, errors.New("Token expired")
+	}
+
+	user, err := t.GetUserByToken(*tkn)
+	if err != nil {
+		return nil, errors.New("no matching user found")
+	}
+
+	return user, nil
 }
