@@ -2,7 +2,10 @@ package data
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base32"
 	"errors"
 	"time"
 
@@ -301,4 +304,24 @@ func (t *Token) GetUserByToken(token Token) (*User, error) {
 	}
 
 	return &user, nil
+}
+
+// GenerateToken function used to generate token
+func (t *Token) GenerateToken(userId int, ttl time.Duration) (*Token, error) {
+	token := &Token{
+		UserId: userId,
+		Expiry: time.Now().Add(ttl),
+	}
+
+	randomBytes := make([]byte, 16)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	token.Token = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(randomBytes)
+	hash := sha256.Sum256([]byte(token.Token))
+	token.TokenHash = hash[:]
+
+	return token, nil
 }
