@@ -410,3 +410,22 @@ func (t *Token) DeleteByToken(plainText string) error {
 
 	return nil
 }
+
+// ValidToken function used to validate a token
+func (t *Token) ValidToken(plainText string) (bool, error) {
+	token, err := t.GetByToken(plainText)
+	if err != nil {
+		return false, errors.New("no matching token found")
+	}
+
+	_, err = t.GetUserByToken(*token)
+	if err != nil {
+		return false, errors.New("no matching user found")
+	}
+
+	if token.Expiry.Before(time.Now()) {
+		return false, errors.New("expired token")
+	}
+
+	return true, nil
+}
