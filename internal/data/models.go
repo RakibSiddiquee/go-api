@@ -363,6 +363,7 @@ func (t *Token) AuthenticateToken(r *http.Request) (*User, error) {
 	return user, nil
 }
 
+// Insert function used to insert a new token
 func (t *Token) Insert(token Token, u User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
@@ -388,6 +389,21 @@ func (t *Token) Insert(token Token, u User) error {
 		time.Now(),
 		token.Expiry,
 	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteByToken function used to delete a token by token
+func (t *Token) DeleteByToken(plainText string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt := `delete from tokens where token = $1`
+
+	_, err := db.ExecContext(ctx, stmt, plainText)
 	if err != nil {
 		return err
 	}
