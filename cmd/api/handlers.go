@@ -1,14 +1,18 @@
 package main
 
 import (
+	"errors"
 	"net/http"
+	"time"
 )
 
 type jsonResponse struct {
 	Error   bool        `json:"error"`
 	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Data    interface{} `json:"data,omitempty"`
 }
+
+type envelope map[string]interface{}
 
 func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	type credentials struct {
@@ -30,9 +34,40 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	// TODO authenticate
 	app.infoLog.Println(creds.Username, creds.Password)
 
+	// Look up the user by email
+	user, err := app.models.User.GetByEmail(creds.Username)
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid username/password"))
+		return
+	}
+
+	// Validate the users's password
+	validPassword, err := user.PasswordMatches(creds.Password)
+	if err != nil || !validPassword {
+		app.errorJSON(w, errors.New("invalid username/password"))
+		return
+	}
+
+	// Generate a token
+	token, err := app.models.Token.GenerateToken(user.ID, 24*time.Hour)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	// Save the token to the database
+	err = app.models.Token.Insert(*token, *user)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
 	// send back a response
-	payload.Error = false
-	payload.Message = "Signed in"
+	payload = jsonResponse{
+		Error:   false,
+		Message: "success",
+		Data:    envelope{"token": token},
+	}
 
 	err = app.writeJSON(w, http.StatusOK, payload)
 	if err != nil {
