@@ -117,3 +117,52 @@ func (app *application) AllUsers(w http.ResponseWriter, r *http.Request) {
 
 	app.writeJSON(w, http.StatusOK, payload)
 }
+
+func (app *application) EditUser(w http.ResponseWriter, r *http.Request) {
+	var user data.User
+	err := app.readJSON(w, r, &user)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	if user.ID == 0 {
+		// Add user
+		if _, err := app.models.User.Insert(user); err != nil {
+			app.errorJSON(w, err)
+			return
+		}
+	} else {
+		// Edit a user
+		u, err := app.models.User.GetOne(user.ID)
+		if err != nil {
+			app.errorJSON(w, err)
+			return
+		}
+
+		u.Email = user.Email
+		u.FirstName = user.FirstName
+		u.LastName = user.LastName
+
+		if err := u.Update(); err != nil {
+			app.errorJSON(w, err)
+			return
+		}
+
+		// If has password, update the password
+		if user.Password != "" {
+			err := u.ResetPassword(user.Password)
+			if err != nil {
+				app.errorJSON(w, err)
+				return
+			}
+		}
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: "Changes saved",
+	}
+
+	_ = app.writeJSON(w, http.StatusAccepted, payload)
+}
