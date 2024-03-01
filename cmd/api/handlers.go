@@ -18,6 +18,7 @@ type jsonResponse struct {
 
 type envelope map[string]interface{}
 
+// Login function used to login
 func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	type credentials struct {
 		Username string `json:"email"`
@@ -79,6 +80,7 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Logout function is used to logout
 func (app *application) Logout(w http.ResponseWriter, r *http.Request) {
 	var requestPayload struct {
 		Token string `json:"token"`
@@ -104,6 +106,7 @@ func (app *application) Logout(w http.ResponseWriter, r *http.Request) {
 	_ = app.writeJSON(w, http.StatusOK, payload)
 }
 
+// AllUsers function is used to get all the users from database
 func (app *application) AllUsers(w http.ResponseWriter, r *http.Request) {
 	var users data.User
 	all, err := users.GetAll()
@@ -170,6 +173,7 @@ func (app *application) EditUser(w http.ResponseWriter, r *http.Request) {
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
 }
 
+// GetUser function is used to get a user or find a user by id
 func (app *application) GetUser(w http.ResponseWriter, r *http.Request) {
 	userId, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -184,4 +188,16 @@ func (app *application) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = app.writeJSON(w, http.StatusOK, user)
+}
+
+func (app *application) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	var requestPayload struct {
+		ID int `json:"id"`
+	}
+
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
 }
