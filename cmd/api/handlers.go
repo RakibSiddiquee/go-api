@@ -190,6 +190,7 @@ func (app *application) GetUser(w http.ResponseWriter, r *http.Request) {
 	_ = app.writeJSON(w, http.StatusOK, user)
 }
 
+// DeleteUser function is used to delete a user
 func (app *application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	var requestPayload struct {
 		ID int `json:"id"`
@@ -200,4 +201,17 @@ func (app *application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, err)
 		return
 	}
+
+	err = app.models.User.DeleteById(requestPayload.ID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: "User deleted",
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, payload)
 }

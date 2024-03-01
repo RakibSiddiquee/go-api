@@ -162,6 +162,7 @@ func (u *User) Update() error {
 	return nil
 }
 
+// Delete function used to delete the user
 func (u *User) Delete() error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
@@ -170,6 +171,21 @@ func (u *User) Delete() error {
 
 	_, err := db.ExecContext(ctx, stmt, u.ID)
 
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteById function used to delete a user by id
+func (u *User) DeleteById(id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt := `delete from users where id = $1`
+
+	_, err := db.ExecContext(ctx, stmt, id)
 	if err != nil {
 		return err
 	}
