@@ -40,7 +40,7 @@ type User struct {
 	Password  string    `json:"password"`
 	Active    int       `json:"active"`
 	CreatedAt time.Time `json:"created_at"`
-	UpdateAt  time.Time `json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	Token     Token     `json:"token"`
 }
 
@@ -75,7 +75,7 @@ func (u *User) GetAll() ([]*User, error) {
 			&user.Password,
 			&user.Active,
 			&user.CreatedAt,
-			&user.UpdateAt,
+			&user.UpdatedAt,
 			&user.Token.ID,
 		)
 		if err != nil {
@@ -106,7 +106,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 		&user.Password,
 		&user.Active,
 		&user.CreatedAt,
-		&user.UpdateAt,
+		&user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -134,7 +134,7 @@ func (u *User) GetOne(id int) (*User, error) {
 		&user.Password,
 		&user.Active,
 		&user.CreatedAt,
-		&user.UpdateAt,
+		&user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -153,7 +153,7 @@ func (u *User) Update() error {
 		email = $1,
 		first_name = $2,
 		last_name = $3,
-		user_active = $4
+		user_active = $4,
 		updated_at = $5
 		where id = $6
 	`
@@ -167,6 +167,7 @@ func (u *User) Update() error {
 		u.ID,
 	)
 
+	return nil
 	if err != nil {
 		return err
 	}
@@ -279,7 +280,7 @@ type Token struct {
 	Token     string    `json:"token"`
 	TokenHash []byte    `json:"-"`
 	CreatedAt time.Time `json:"created_at"`
-	UpdateAt  time.Time `json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	Expiry    time.Time `json:"expiry"`
 }
 
@@ -299,7 +300,7 @@ func (t *Token) GetByToken(plainText string) (*Token, error) {
 		&token.Token,
 		&token.TokenHash,
 		&token.CreatedAt,
-		&token.UpdateAt,
+		&token.UpdatedAt,
 		&token.Expiry,
 	)
 
@@ -328,7 +329,7 @@ func (t *Token) GetUserByToken(token Token) (*User, error) {
 		&user.Password,
 		&user.Active,
 		&user.CreatedAt,
-		&user.UpdateAt,
+		&user.UpdatedAt,
 	)
 
 	if err != nil {
