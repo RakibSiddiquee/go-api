@@ -223,6 +223,7 @@ func (app *application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	_ = app.writeJSON(w, http.StatusOK, payload)
 }
 
+// LogUserOutAndSetInactive function used to log a user out and set inactive
 func (app *application) LogUserOutAndSetInactive(w http.ResponseWriter, r *http.Request) {
 	userId, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -256,4 +257,27 @@ func (app *application) LogUserOutAndSetInactive(w http.ResponseWriter, r *http.
 	}
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
+}
+
+// ValidateToken function is used to validate a token
+func (app *application) ValidateToken(w http.ResponseWriter, r *http.Request) {
+	var requestPayload struct {
+		Token string `json:"token"`
+	}
+
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	valid := false
+	valid, _ = app.models.Token.ValidToken(requestPayload.Token)
+
+	payload := jsonResponse{
+		Error: false,
+		Data:  valid,
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, payload)
 }
