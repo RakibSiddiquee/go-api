@@ -167,7 +167,6 @@ func (u *User) Update() error {
 		u.ID,
 	)
 
-	return nil
 	if err != nil {
 		return err
 	}

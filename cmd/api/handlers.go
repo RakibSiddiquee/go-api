@@ -252,7 +252,7 @@ func (app *application) LogUserOutAndSetInactive(w http.ResponseWriter, r *http.
 
 	payload := jsonResponse{
 		Error:   false,
-		Message: "user logged out and set to inactive",
+		Message: "User logged out and set to inactive",
 	}
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
