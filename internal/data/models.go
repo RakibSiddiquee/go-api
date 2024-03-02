@@ -76,6 +76,7 @@ func (u *User) GetAll() ([]*User, error) {
 			&user.Active,
 			&user.CreatedAt,
 			&user.UpdateAt,
+			&user.Token.ID,
 		)
 		if err != nil {
 			return nil, err
@@ -92,7 +93,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, first_name, last_name, password, created_at, updated_at from users where email = $1`
+	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at from users where email = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, email)
@@ -103,6 +104,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Password,
+		&user.Active,
 		&user.CreatedAt,
 		&user.UpdateAt,
 	)
@@ -119,7 +121,7 @@ func (u *User) GetOne(id int) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, first_name, last_name, password, created_at, updated_at from users where id = $1`
+	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at from users where id = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, id)
@@ -130,6 +132,7 @@ func (u *User) GetOne(id int) (*User, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Password,
+		&user.Active,
 		&user.CreatedAt,
 		&user.UpdateAt,
 	)
@@ -150,14 +153,16 @@ func (u *User) Update() error {
 		email = $1,
 		first_name = $2,
 		last_name = $3,
-		updated_at = $4
-		where id = $5
+		user_active = $4
+		updated_at = $5
+		where id = $6
 	`
 
 	_, err := db.ExecContext(ctx, stmt,
 		u.Email,
 		u.FirstName,
 		u.LastName,
+		u.Active,
 		time.Now(),
 		u.ID,
 	)
@@ -211,8 +216,8 @@ func (u *User) Insert(user User) (int, error) {
 	}
 
 	var newID int
-	stmt := `insert into users (email, first_name, last_name, password, created_at, updated_at)
-		values ($1, $2, $3, $4, $5, $6) returning id
+	stmt := `insert into users (email, first_name, last_name, password, user_active, created_at, updated_at)
+		values ($1, $2, $3, $4, $5, $6, $7) returning id
 	`
 
 	err = db.QueryRowContext(ctx, stmt,
@@ -220,6 +225,7 @@ func (u *User) Insert(user User) (int, error) {
 		user.FirstName,
 		user.LastName,
 		hashedPassword,
+		user.Active,
 		time.Now(),
 		time.Now(),
 	).Scan(&newID)
@@ -309,7 +315,7 @@ func (t *Token) GetUserByToken(token Token) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, first_name, last_name, password, created_at, updated_at from users where id = $1`
+	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at from users where id = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, token.UserId)
@@ -320,6 +326,7 @@ func (t *Token) GetUserByToken(token Token) (*User, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Password,
+		&user.Active,
 		&user.CreatedAt,
 		&user.UpdateAt,
 	)
@@ -383,6 +390,10 @@ func (t *Token) AuthenticateToken(r *http.Request) (*User, error) {
 		return nil, errors.New("no matching user found")
 	}
 
+	if user.Active == 0 {
+		return nil, errors.New("user not active")
+	}
+
 	return user, nil
 }
 
@@ -427,6 +438,21 @@ func (t *Token) DeleteByToken(plainText string) error {
 	stmt := `delete from tokens where token = $1`
 
 	_, err := db.ExecContext(ctx, stmt, plainText)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteTokensForUser function used to delete a token by user id
+func (t *Token) DeleteTokensForUser(id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt := `delete from tokens where user_id=$1`
+
+	_, err := db.ExecContext(ctx, stmt, id)
 	if err != nil {
 		return err
 	}
