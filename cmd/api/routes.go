@@ -24,6 +24,7 @@ func (app *application) routes() http.Handler {
 	mux.Post("/users/logout", app.Logout)
 	mux.Get("/books", app.AllBooks)
 	mux.Post("/books", app.AllBooks)
+	mux.Get("/books/{slug}", app.OneBook)
 
 	mux.Post("/validate-token", app.ValidateToken)
 
