@@ -39,6 +39,7 @@ func (app *application) routes() http.Handler {
 
 		// admin book routes
 		mux.Post("/authors/all", app.AuthorAll)
+		mux.Post("/admin/books/save", app.EditBook)
 	})
 
 	// static files
