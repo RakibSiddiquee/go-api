@@ -355,6 +355,7 @@ func (app *application) AuthorAll(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusOK, payload)
 }
 
+// EditBook function is used to add/edit a book
 func (app *application) EditBook(w http.ResponseWriter, r *http.Request) {
 	var requestPayload struct {
 		ID              int    `json:"id"`
@@ -419,4 +420,25 @@ func (app *application) EditBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.writeJSON(w, http.StatusAccepted, payload)
+}
+
+func (app *application) BookByID(w http.ResponseWriter, r *http.Request) {
+	bookID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	book, err := app.models.Book.GetOneById(bookID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	payload := jsonResponse{
+		Error: false,
+		Data:  book,
+	}
+
+	app.writeJSON(w, http.StatusOK, payload)
 }
