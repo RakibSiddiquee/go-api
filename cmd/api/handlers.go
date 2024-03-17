@@ -282,6 +282,7 @@ func (app *application) ValidateToken(w http.ResponseWriter, r *http.Request) {
 	_ = app.writeJSON(w, http.StatusOK, payload)
 }
 
+// AllBooks function used to get all books
 func (app *application) AllBooks(w http.ResponseWriter, r *http.Request) {
 	books, err := app.models.Book.GetAll()
 	if err != nil {
@@ -298,6 +299,7 @@ func (app *application) AllBooks(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusOK, payload)
 }
 
+// OneBook function is used to get a book by slug
 func (app *application) OneBook(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 
@@ -313,4 +315,36 @@ func (app *application) OneBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *application) AuthorAll(w http.ResponseWriter, r *http.Request) {
+	all, err := app.models.Author.All()
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	type selectData struct {
+		Value int    `json:"value"`
+		Text  string `json:"text"`
+	}
+
+	var results []selectData
+
+	for _, x := range all {
+		author := selectData{
+			Value: x.ID,
+			Text:  x.AuthorName,
+		}
+
+		results = append(results, author)
+	}
+
+	payload := jsonResponse{
+		Error: false,
+		Data:  results,
+	}
+
+	app.writeJSON(w, http.StatusOK, payload)
+
 }
