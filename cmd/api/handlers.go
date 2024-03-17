@@ -422,6 +422,7 @@ func (app *application) EditBook(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusAccepted, payload)
 }
 
+// BookByID function is used to find a book by id
 func (app *application) BookByID(w http.ResponseWriter, r *http.Request) {
 	bookID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -438,6 +439,32 @@ func (app *application) BookByID(w http.ResponseWriter, r *http.Request) {
 	payload := jsonResponse{
 		Error: false,
 		Data:  book,
+	}
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+// DeleteBook function is used to delete a book
+func (app *application) DeleteBook(w http.ResponseWriter, r *http.Request) {
+	var requestPayload struct {
+		ID int `json:"id"`
+	}
+
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	err = app.models.Book.DeleteByID(requestPayload.ID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: "Book deleted",
 	}
 
 	app.writeJSON(w, http.StatusOK, payload)
