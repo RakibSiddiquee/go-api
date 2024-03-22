@@ -59,7 +59,7 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data interf
 	return nil
 }
 
-func (app *application) errorJSON(w http.ResponseWriter, err error, status ...int) {
+func (app *application) errorJSON(w http.ResponseWriter, err error, status ...int) error {
 	statusCode := http.StatusBadRequest
 
 	if len(status) > 0 {
@@ -88,4 +88,6 @@ func (app *application) errorJSON(w http.ResponseWriter, err error, status ...in
 	payload.Message = customErr.Error()
 
 	app.writeJSON(w, statusCode, payload)
+
+	return nil
 }
